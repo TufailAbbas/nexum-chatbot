@@ -1,11 +1,10 @@
 fastapi
-uvicorn[standard]
-langchain-community
+uvicorn
 langchain-text-splitters
-langchain-huggingface
+langchain-google-genai
 langchain-groq
 langchain-core
+langchain-community
 faiss-cpu
 pymupdf
 python-dotenv
-sentence-transformers

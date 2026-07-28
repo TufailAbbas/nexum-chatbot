@@ -3,13 +3,14 @@ from dotenv import load_dotenv
 
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # ---- Your original notebook code, exactly as it was ----
 
@@ -23,10 +24,22 @@ splitter = RecursiveCharacterTextSplitter(
 )
 chunks = splitter.split_documents(docs)
 
-embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+embedding = GoogleGenerativeAIEmbeddings(
+    model="models/gemini-embedding-001"
+)
 
-vectorstores = FAISS.from_documents(documents=chunks, embedding=embedding)
-vectorstores.save_local("faiss_index")
+if os.path.exists("faiss_index"):
+    vectorstores = FAISS.load_local(
+        "faiss_index",
+        embedding,
+        allow_dangerous_deserialization=True
+    )
+else:
+    vectorstores = FAISS.from_documents(
+        documents=chunks,
+        embedding=embedding
+    )
+    vectorstores.save_local("faiss_index")
 
 retriever = vectorstores.as_retriever(search_type="similarity", search_kwargs={"k": 4})
 
