@@ -8,3 +8,5 @@ langchain-community
 faiss-cpu
 pymupdf
 python-dotenv
+markdown
+markdown-it-py
