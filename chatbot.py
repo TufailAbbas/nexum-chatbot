@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -8,38 +9,46 @@ from langchain_community.vectorstores import FAISS
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# ---- Your original notebook code, exactly as it was ----
-
-loader = PyMuPDFLoader("NEXUM.pdf")
-docs = loader.load()
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=800,
-    chunk_overlap=150,
-    separators=["\n\n", "\n", ". ", " ", ""]
-)
-chunks = splitter.split_documents(docs)
+# ---- Vector Store & LLM Initialization ----
 
 embedding = GoogleGenerativeAIEmbeddings(
     model="models/gemini-embedding-001"
 )
 
 if os.path.exists("faiss_index"):
+    logger.info("Loading existing FAISS index...")
     vectorstores = FAISS.load_local(
         "faiss_index",
         embedding,
         allow_dangerous_deserialization=True
     )
+    logger.info("FAISS index loaded successfully.")
 else:
+    logger.info("FAISS index not found. Building index from NEXUM.pdf...")
+    loader = PyMuPDFLoader("NEXUM.pdf")
+    docs = loader.load()
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=800,
+        chunk_overlap=150,
+        separators=["\n\n", "\n", ". ", " ", ""]
+    )
+    chunks = splitter.split_documents(docs)
+
     vectorstores = FAISS.from_documents(
         documents=chunks,
         embedding=embedding
     )
     vectorstores.save_local("faiss_index")
+    logger.info("FAISS index built and saved successfully.")
 
 retriever = vectorstores.as_retriever(search_type="similarity", search_kwargs={"k": 4})
 
