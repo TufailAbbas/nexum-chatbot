@@ -17,9 +17,9 @@ allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
 allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_methods=["POST", "GET"],
+    CORSMiddleware, 
+    allow_origins=allowed_origins, 
+    allow_methods=["*"], 
     allow_headers=["*"]
 )
 
@@ -30,7 +30,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "Nexum Chatbot API"}
+    return {"status": "ok"}
 
 
 @app.post("/chat")
